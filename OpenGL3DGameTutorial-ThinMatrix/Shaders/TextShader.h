@@ -12,6 +12,7 @@ public:
 	void LoadViewMatrix(glm::mat4& cameraViewMatrix);
 	GLuint getTextureLocation();
 	GLuint getColorLocation();
+	GLuint getBillboardLocation();
 	~TextShader();
 private:
 	GLuint location_ModelMatrix;
@@ -19,6 +20,7 @@ private:
 	GLuint location_ViewMatrix;
 	GLuint location_texture;
 	GLuint location_textColor;
+	GLuint location_billboard;
 
 
 protected:

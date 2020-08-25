@@ -33,6 +33,11 @@ GLuint TextShader::getColorLocation()
 	return location_textColor;
 }
 
+GLuint TextShader::getBillboardLocation()
+{
+	return location_billboard;
+}
+
 
 TextShader::~TextShader()
 {
@@ -41,8 +46,7 @@ TextShader::~TextShader()
 void TextShader::BindAttributes()
 {
 	BindAttribute(0, "vertex");
-	BindAttribute(1, "tex_coord");
-	BindAttribute(2, "color");
+	BindAttribute(1, "texture");
 }
 
 void TextShader::GetAllUniformLocations()
@@ -52,5 +56,6 @@ void TextShader::GetAllUniformLocations()
 	location_ViewMatrix = GetUniformLocation("view");
 	location_texture = GetUniformLocation("texture");
 	location_textColor = GetUniformLocation("textColor");
+	location_billboard = GetUniformLocation("isBillboard");
 
 }

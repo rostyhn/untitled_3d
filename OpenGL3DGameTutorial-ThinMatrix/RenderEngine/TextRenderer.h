@@ -24,9 +24,9 @@ public:
 	~TextRenderer();
 	void Render2D(TextShader &s, std::string text, float x, float y, float scale, glm::vec3 color);
 	void Render3D(TextShader &s, std::string text, glm::vec3 location, float scale, glm::vec3 color);
-
 	std::map<char, Character> characters;
 	unsigned int VAO, VBO;
+
 private:
 	TextShader m_shader;
 	void init();

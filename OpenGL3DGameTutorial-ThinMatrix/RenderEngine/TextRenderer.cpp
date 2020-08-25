@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <glm/gtc/matrix_transform.hpp>
 #include "../RenderEngine/TextRenderer.h"
 #include "freetype-gl/freetype-gl.h"
 #include "freetype-gl/vertex-buffer.h"
@@ -21,9 +22,10 @@ TextRenderer::~TextRenderer()
 {
 }
 
+
+
 void TextRenderer::Render2D(TextShader &s, std::string text, float x, float y, float scale, glm::vec3 color)
 {
-		// activate corresponding render state	
 		s.Use();
 		glUniform3f(glGetUniformLocation(s.getColorLocation(), "textColor"), color.x, color.y, color.z);
 		glActiveTexture(GL_TEXTURE0);
@@ -41,14 +43,14 @@ void TextRenderer::Render2D(TextShader &s, std::string text, float x, float y, f
 			float w = ch.Size.x * scale;
 			float h = ch.Size.y * scale;
 			// update VBO for each character
-			float vertices[6][4] = {
-				{ xpos,     ypos + h,   0.0f, 0.0f },
-				{ xpos,     ypos,       0.0f, 1.0f },
-				{ xpos + w, ypos,       1.0f, 1.0f },
+			float vertices[6][5] = {
+				{ xpos,     ypos + h,   0.0f,  0.0f, 0.0f },
+				{ xpos,     ypos,       0.0f,  0.0f, 1.0f },
+				{ xpos + w, ypos,       0.0f,  1.0f, 1.0f },
 
-				{ xpos,     ypos + h,   0.0f, 0.0f },
-				{ xpos + w, ypos,       1.0f, 1.0f },
-				{ xpos + w, ypos + h,   1.0f, 0.0f }
+				{ xpos,     ypos + h,   0.0f,  0.0f, 0.0f },
+				{ xpos + w, ypos,       0.0f,  1.0f, 1.0f },
+				{ xpos + w, ypos + h,   0.0f,  1.0f, 0.0f }
 			};
 			// render glyph texture over quad
 			glBindTexture(GL_TEXTURE_2D, ch.TextureID);
@@ -64,6 +66,58 @@ void TextRenderer::Render2D(TextShader &s, std::string text, float x, float y, f
 		glBindVertexArray(0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+
+void TextRenderer::Render3D(TextShader & s, std::string text, glm::vec3 location, float scale, glm::vec3 color)
+{
+	s.Use();
+	glUniform3f(glGetUniformLocation(s.getColorLocation(), "textColor"), color.x, color.y, color.z);
+	glActiveTexture(GL_TEXTURE0);
+	glBindVertexArray(VAO);
+
+	//figure out reasonable center
+	float x = 1920/2;
+	float y = 1080/2;
+
+	glm::mat4 m;
+	m = glm::translate(m, location);
+	s.LoadModelMatrix(m);
+
+	std::string::const_iterator c;
+	for (c = text.begin(); c != text.end(); c++)
+	{
+		Character ch = characters[*c];
+
+		float xpos = x + ch.Bearing.x * scale;
+		float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
+		float w = ch.Size.x * scale;
+		float h = ch.Size.y * scale;
+		// update VBO for each character
+		float vertices[6][5] = {
+			{ xpos,     ypos + h,   0.0f,  0.0f, 0.0f },
+			{ xpos,     ypos,       0.0f,  0.0f, 1.0f },
+			{ xpos + w, ypos,       0.0f,  1.0f, 1.0f },
+
+			{ xpos,     ypos + h,   0.0f,  0.0f, 0.0f },
+			{ xpos + w, ypos,       0.0f,  1.0f, 1.0f },
+			{ xpos + w, ypos + h,   0.0f,  1.0f, 0.0f }
+		};
+		// render glyph texture over quad
+		glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+		// update content of VBO memory
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		// render quad
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		// now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+		x += (ch.Advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+	}
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+}
 
 void TextRenderer::init()
 {
@@ -128,9 +182,11 @@ void TextRenderer::init()
 		glGenBuffers(1, &VBO);
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 5, NULL, GL_DYNAMIC_DRAW);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 	}
