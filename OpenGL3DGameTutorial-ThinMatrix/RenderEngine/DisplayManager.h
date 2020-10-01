@@ -15,6 +15,8 @@ public:
 	void UpdateDisplay();
 	float& GetAspect();
 	void ShowUPS();
+	bool toggleCursor();
+	GLFWwindow* getWindow();
 private:
 	GLFWwindow* m_window;
 	float m_aspect;

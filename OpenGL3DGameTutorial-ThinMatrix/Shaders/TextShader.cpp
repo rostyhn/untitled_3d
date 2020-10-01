@@ -23,6 +23,11 @@ void TextShader::LoadViewMatrix(glm::mat4 & cameraViewMatrix)
 	LoadMatrix4(location_ViewMatrix, cameraViewMatrix);
 }
 
+void TextShader::LoadPosition(glm::vec3 & world_pos)
+{
+	LoadVector(location_world_pos, world_pos);
+}
+
 GLuint TextShader::getTextureLocation()
 {
 	return location_texture;
@@ -57,5 +62,5 @@ void TextShader::GetAllUniformLocations()
 	location_texture = GetUniformLocation("texture");
 	location_textColor = GetUniformLocation("textColor");
 	location_billboard = GetUniformLocation("isBillboard");
-
+	location_world_pos = GetUniformLocation("world_pos");
 }

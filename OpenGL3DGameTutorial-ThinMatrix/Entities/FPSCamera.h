@@ -6,7 +6,7 @@
 class FPSCamera
 {
 public:
-	FPSCamera(bool freeRoam = false);
+	FPSCamera();
 	virtual ~FPSCamera();
 
 	void Update();

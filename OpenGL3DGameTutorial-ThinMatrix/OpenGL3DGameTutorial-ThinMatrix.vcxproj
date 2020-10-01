@@ -97,9 +97,12 @@
     <ClCompile Include="Entities\Camera.cpp" />
     <ClCompile Include="Engine\GameManager.cpp" />
     <ClCompile Include="Entities\FPSCamera.cpp" />
+    <ClCompile Include="MenuItem.cpp" />
+    <ClCompile Include="MenuState.cpp" />
     <ClCompile Include="RenderEngine\MasterRenderer.cpp" />
     <ClCompile Include="RenderEngine\OBJLoader.cpp" />
     <ClCompile Include="RenderEngine\TextRenderer.cpp" />
+    <ClCompile Include="RunState.cpp" />
     <ClCompile Include="Shaders\TerrainShader.cpp" />
     <ClCompile Include="RenderEngine\TerrainRenderer.cpp" />
     <ClCompile Include="Shaders\TextShader.cpp" />
@@ -118,9 +121,13 @@
     <ClInclude Include="Entities\Entity.h" />
     <ClInclude Include="Entities\Light.h" />
     <ClInclude Include="Entities\FPSCamera.h" />
+    <ClInclude Include="GameState.h" />
+    <ClInclude Include="MenuItem.h" />
+    <ClInclude Include="MenuState.h" />
     <ClInclude Include="RenderEngine\MasterRenderer.h" />
     <ClInclude Include="RenderEngine\OBJLoader.h" />
     <ClInclude Include="RenderEngine\TextRenderer.h" />
+    <ClInclude Include="RunState.h" />
     <ClInclude Include="Shaders\TerrainShader.h" />
     <ClInclude Include="RenderEngine\TerrainRenderer.h" />
     <ClInclude Include="Shaders\TextShader.h" />

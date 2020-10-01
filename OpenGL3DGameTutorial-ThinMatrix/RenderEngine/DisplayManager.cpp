@@ -1,6 +1,10 @@
 #include <iostream>
 #include "DisplayManager.h"
 
+/* 
+ *
+ *
+ */
 DisplayManager::DisplayManager(int width, int height, const std::string& title)
 {
 	m_title = title;
@@ -16,6 +20,7 @@ DisplayManager::DisplayManager(int width, int height, const std::string& title)
 
 	// Create OpenGL window using GLFW
 	m_window = glfwCreateWindow(width, height, title.c_str(), glfwGetPrimaryMonitor(), NULL);
+	
 	// Check if window was created
 	if (m_window != NULL)
 	{
@@ -32,7 +37,6 @@ DisplayManager::DisplayManager(int width, int height, const std::string& title)
 		std::cerr << "ERROR: Failed to create window" << std::endl;
 	}
 }
-
 
 DisplayManager::~DisplayManager()
 {
@@ -92,3 +96,29 @@ void DisplayManager::ShowUPS()
 	// Store the current time
 	previous = now;
 }
+
+bool DisplayManager::toggleCursor()
+{
+	bool isToggled;
+	if(glfwGetInputMode(m_window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
+	{
+		//cursor is on
+		glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		isToggled = true;
+	}
+	else
+	{
+		//later make this fancy but who cares atm
+		GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+		glfwSetCursor(m_window, cursor);
+		glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		isToggled = false;
+	}
+	return isToggled;
+}
+
+GLFWwindow * DisplayManager::getWindow()
+{
+	return m_window;
+}
+

@@ -2,8 +2,8 @@
 #include <GLFW\glfw3.h>
 #include <glm\gtx\transform.hpp>
 
-FPSCamera::FPSCamera(bool freeRoam)
-	: m_position(400, 5, 400), m_viewDirection(0, 0, 1), m_freeRoam(freeRoam)
+FPSCamera::FPSCamera()
+	: m_position(400, 5, 400), m_viewDirection(0, 0, 1), m_freeRoam(true)
 {
 	// Hide the cursor
 	glfwSetInputMode(glfwGetCurrentContext(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -21,7 +21,6 @@ void FPSCamera::Update()
 	double x, y;
 	glfwGetCursorPos(glfwGetCurrentContext(), &x, &y);
 	MouseUpdate(glm::vec2(x, y));
-
 	Move();
 }
 
@@ -90,10 +89,4 @@ void FPSCamera::Move()
 		m_position += glm::vec3(0.0, 1.25, 0.0);
 		crouch = false;
 	}
-
-
-
-	// Press escape to exit
-	if (glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(glfwGetCurrentContext(), GL_TRUE);
 }

@@ -27,10 +27,10 @@ TextRenderer::~TextRenderer()
 void TextRenderer::Render2D(TextShader &s, std::string text, float x, float y, float scale, glm::vec3 color)
 {
 		s.Use();
-		glUniform3f(glGetUniformLocation(s.getColorLocation(), "textColor"), color.x, color.y, color.z);
+		glUniform3f(s.getColorLocation(), color.x, color.y, color.z);
 		glActiveTexture(GL_TEXTURE0);
 		glBindVertexArray(VAO);
-
+		glUniform1i(s.getBillboardLocation(), 0);
 		// iterate through all characters
 		std::string::const_iterator c;
 		for (c = text.begin(); c != text.end(); c++)
@@ -70,17 +70,18 @@ void TextRenderer::Render2D(TextShader &s, std::string text, float x, float y, f
 void TextRenderer::Render3D(TextShader & s, std::string text, glm::vec3 location, float scale, glm::vec3 color)
 {
 	s.Use();
+	
+	
 	glUniform3f(glGetUniformLocation(s.getColorLocation(), "textColor"), color.x, color.y, color.z);
 	glActiveTexture(GL_TEXTURE0);
 	glBindVertexArray(VAO);
 
-	//figure out reasonable center
-	float x = 1920/2;
-	float y = 1080/2;
+	float x = 0;
+	float y = 0;
 
-	glm::mat4 m;
-	m = glm::translate(m, location);
-	s.LoadModelMatrix(m);
+	//swivles on left side, need to rewrite to determine middle
+	s.LoadPosition(location);
+
 
 	std::string::const_iterator c;
 	for (c = text.begin(); c != text.end(); c++)
@@ -115,13 +116,11 @@ void TextRenderer::Render3D(TextShader & s, std::string text, glm::vec3 location
 	}
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
-
 }
 
 void TextRenderer::init()
 {
-
+	//switch to atlas
 	FT_Library ft;
 	if (FT_Init_FreeType(&ft))
 	{
@@ -166,11 +165,12 @@ void TextRenderer::init()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		// now store character for later use
+
 		Character character = {
 			texture,
 			glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
 			glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
-			face->glyph->advance.x
+			face->glyph->advance.x,
 		};
 		characters.insert(std::pair<char, Character>(c, character));
 	}

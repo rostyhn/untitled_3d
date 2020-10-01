@@ -4,6 +4,7 @@
 #include "EntityRenderer.h"
 #include "TerrainRenderer.h"
 #include "TextRenderer.h"
+#include "../OpenGL3DGameTutorial-ThinMatrix/MenuItem.h"
 #include "../Entities/FPSCamera.h"
 
 class MasterRenderer
@@ -13,6 +14,8 @@ public:
 	virtual ~MasterRenderer();
 
 	void Render(Light& light, FPSCamera camera);
+	void RenderMenu();
+	void Process2DText(MenuItem& menuItem);
 	void ProcessTerrain(Terrain& terrain);
 	void ProcessEntity(Entity& entity);
 private:
@@ -27,6 +30,7 @@ private:
 	TextShader m_textShader;
 	TextRenderer m_textRenderer;
 	std::vector<Terrain> terrains;
+	std::vector<MenuItem> menuItems;
 	std::map<TexturedModel, std::vector<Entity>, tmCompare> m_entities;
 };
 

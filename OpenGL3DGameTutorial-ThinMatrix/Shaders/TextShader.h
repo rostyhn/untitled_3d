@@ -10,6 +10,7 @@ public:
 	void LoadModelMatrix(glm::mat4& matrix);
 	void LoadProjectionMatrix(glm::mat4& matrix);
 	void LoadViewMatrix(glm::mat4& cameraViewMatrix);
+	void LoadPosition(glm::vec3& world_pos);
 	GLuint getTextureLocation();
 	GLuint getColorLocation();
 	GLuint getBillboardLocation();
@@ -21,7 +22,7 @@ private:
 	GLuint location_texture;
 	GLuint location_textColor;
 	GLuint location_billboard;
-
+	GLuint location_world_pos;
 
 protected:
 	void BindAttributes();

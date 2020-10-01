@@ -22,6 +22,7 @@ RawModel Terrain::GenerateTerrain(Loader& loader)
 	std::vector<glm::vec3> vertices(count), normals(count);
 	std::vector<glm::vec2> textureCoords(count);
 	std::vector<int> indices(6 * (VERTEX_COUNT - 1) * VERTEX_COUNT);
+	
 	int vertexPointer = 0;
 	for (int i = 0; i < VERTEX_COUNT; i++)
 	{

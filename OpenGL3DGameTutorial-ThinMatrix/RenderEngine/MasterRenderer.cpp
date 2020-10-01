@@ -50,20 +50,34 @@ void MasterRenderer::Render(Light& light, FPSCamera camera)
 	m_basicShader.UnUse();
 	m_entities.clear();
 
-	//render hud and menus
-	m_textShader.Use();
-	m_textShader.LoadProjectionMatrix(glm::ortho(0.0f, 1920.0f, 0.0f, 1080.0f));
-	glUniform1i(m_textShader.getBillboardLocation(), 0);
-	m_textRenderer.Render2D(m_textShader, "TEST", 400.0, 400.0, 2.0, glm::vec3(1.0f, 1.0f, 1.0f));
+	//draw billboards
+	/*m_textShader.Use();
 	glUniform1i(m_textShader.getBillboardLocation(), 1);
 	m_textShader.LoadProjectionMatrix(m_projectionMatrix);
 	m_textShader.LoadViewMatrix(camera.GetViewMatrix());
-	m_textRenderer.Render3D(m_textShader, "TESTING BILLBOARD", glm::vec3(0, 5, 5), 2.0, glm::vec3(1.0f, 1.0f, 1.0f));
-
+	m_textRenderer.Render3D(m_textShader, "TESTING BILLBOARD", glm::vec3(100, 5.0, 50.0), 0.25, glm::vec3(1.0f, 0.0f, 0.0f));
+	
+	//render hud and menus
+	m_textShader.LoadProjectionMatrix(glm::ortho(0.0f, 1920.0f, 0.0f, 1080.0f));
+	glUniform1i(m_textShader.getBillboardLocation(), 0);
+	m_textRenderer.Render2D(m_textShader, "TEST", 400.0, 400.0, 2.0, glm::vec3(1.0f, 1.0f, 1.0f));
+	*/
 	m_textShader.UnUse();
 
 }
 
+void MasterRenderer::RenderMenu()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	m_textShader.Use();
+
+	for (MenuItem mi : menuItems)
+	{
+		m_textRenderer.Render2D(m_textShader, mi.text, mi.x, mi.y, mi.scale, mi.color);
+	}
+	menuItems.clear();
+	m_textShader.UnUse();
+}
 
 void MasterRenderer::ProcessTerrain(Terrain& terrain)
 {
@@ -71,6 +85,10 @@ void MasterRenderer::ProcessTerrain(Terrain& terrain)
 	terrains.push_back(terrain);
 }
 
+void MasterRenderer::Process2DText(MenuItem& menuItem)
+{
+	menuItems.push_back(menuItem);
+}
 
 void MasterRenderer::ProcessEntity(Entity& entity)
 {
