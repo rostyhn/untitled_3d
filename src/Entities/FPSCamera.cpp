@@ -1,6 +1,6 @@
 #include "FPSCamera.h"
-#include <GLFW\glfw3.h>
-#include <glm\gtx\transform.hpp>
+#include <GLFW/glfw3.h>
+#include <glm/gtx/transform.hpp>
 
 FPSCamera::FPSCamera()
 	: m_position(400, 5, 400), m_viewDirection(0, 0, 1), m_freeRoam(true)
