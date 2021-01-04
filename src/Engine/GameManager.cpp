@@ -15,11 +15,12 @@ void GameManager::Init() {
     // Create the display manager (pointers must be deleted)
     DisplayManager* m_displayManager = &DisplayManager::getInstance();
 
+    resX = m_displayManager->m_width;
+    resY = m_displayManager->m_height;
     // Initialize glew using experimental(new)
     glewExperimental = true;
     GLenum status = glewInit();
     if (status == GLEW_OK) {
-      renderer = new MasterRenderer(m_displayManager->GetAspect());
       m_running = true;
     } else {
       std::cerr << "ERROR: GLEW failed to initialize \n"
@@ -36,7 +37,9 @@ void GameManager::Cleanup() {
     states.pop_back();
   }
   delete &DisplayManager::getInstance();
+  delete &Coordinator::GetInstance();
   glfwTerminate();
+  
 }
 
 void GameManager::ChangeState(GameState *state) {
@@ -91,6 +94,7 @@ void GameManager::Draw() {
   // let the state draw the screen
   if(m_running) {
     states.back()->Draw(this);
+    
     DisplayManager::getInstance().UpdateDisplay();
     DisplayManager::getInstance().ShowUPS();
   }

@@ -1,6 +1,8 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
-#include "../src/Engine/GameManager.h"
+#include "../Engine/GameManager.h"
+#include "../Toolbox/Coordinator.h"
+
 class GameState
 {
 public:
@@ -13,9 +15,11 @@ public:
 	virtual void HandleEvents(GameManager* pManager) = 0;
 	virtual void Update(GameManager* pManager) = 0;
 	virtual void Draw(GameManager* pManager) = 0;
-
 protected: 
-	GameState() { }
+  GameState() { }
+  std::vector<Entity> m_Entities;
+
+  
 };
 
 

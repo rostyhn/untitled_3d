@@ -2,27 +2,36 @@
 #define LOADER_H
 
 #include <vector>
+#include <map>
 #include <string>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include "../Models/RawModel.h"
 
-class Loader
-{
+class Loader {
 public:
-	Loader();
-	virtual ~Loader();
-
-	RawModel LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> textures, std::vector<glm::vec3> normals, std::vector<int> indices);
-	GLuint LoadTexture(const std::string& fileName, bool repeat = false);
-	inline void UnbindVAO() { glBindVertexArray(0); }
-private:
-	std::vector<GLuint> m_vaos;
-	std::vector<GLuint> m_vbos;
-	std::vector<GLuint> m_textures;
-	GLuint CreateVAO();
-	void StoreDataInAttributeList(GLuint attribNumber, int attribSize, void* data, int dataSize);
-	void BindIndicesBuffer(int* indices, int& count);
+ 
+  static Loader& getInstance() {
+    static Loader *m_loader = new Loader();
+    return *m_loader;
+  }
+  virtual ~Loader();
+  void LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> textures, std::vector<glm::vec3> normals, std::vector<int> indices, const std::string& name);
+  inline void UnbindVAO() { glBindVertexArray(0); }
+  void LoadTexture(const std::string& fileName, bool repeat);
+  GLuint GetVAO(const std::string& modelName);
+  GLuint GetTextureID(const std::string & textureName);
+  int GetVertexCount(const std::string& modelName);
+protected:
+  Loader();
+ private:
+  std::map<const std::string, GLuint> m_vaos;
+  std::vector<GLuint> m_vbos;
+  std::map<const std::string, GLuint> m_textures;
+  std::map<const std::string, int> m_vertSize;
+  GLuint CreateVAO(const std::string& name);
+  void StoreDataInAttributeList(GLuint attribNumber, int attribSize, void* data, int dataSize);
+  void BindIndicesBuffer(int* indices, int& count);
 };
 
-#endif // LOADER_H
+
+#endif 

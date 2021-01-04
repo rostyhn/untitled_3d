@@ -2,7 +2,6 @@
 #define MATHS_H
 
 #include <glm/glm.hpp>
-#include "../Entities/Camera.h"
 
 class Maths
 {

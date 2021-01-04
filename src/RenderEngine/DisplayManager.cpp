@@ -27,9 +27,11 @@ DisplayManager::DisplayManager(int width, int height, const std::string& title)
 		glViewport(0, 0, width, height);
 		// Enable vertical sync
 		glfwSwapInterval(1);
-	}
+		m_width = width;
+		m_height = height;
+	 }
 	else
-	{
+        {
 		std::cerr << "ERROR: Failed to create window" << std::endl;
 	}
 }

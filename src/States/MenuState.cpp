@@ -1,85 +1,86 @@
 #include "MenuState.h"
+#include "../Components/Transform.h"
+#include "../Components/UIElement.h"
 #include "../RenderEngine/DisplayManager.h"
+#include "../System/UICollisionSystem.h"
+#include "../System/UIRenderSystem.h"
 /* TODO:
- * figure out how to get the current height / width of the window and position stuff relatively to the screen
- * have this passed to the menuItems to facilitate collision detection
- * have a piece of the runstate saved as a runbuffer and blurred to make it look pretty that would be cool
- * figure out if submenus should be another state or maybe even make a menuManager class
+ * figure out how to get the current height / width of the window and position
+ * stuff relatively to the screen have this passed to the menuItems to
+ * facilitate collision detection have a piece of the runstate saved as a
+ * runbuffer and blurred to make it look pretty that would be cool figure out if
+ * submenus should be another state or maybe even make a menuManager class
  * figure out how to exit gracefully
  */
 
-enum MenuCommand {
-	CONT,
-	QUIT
-};
+MenuState::MenuState() {
+  
+  Coordinator *coordinator = &Coordinator::GetInstance();
+  coordinator->RegisterComponent<UIElement>();
 
+  auto uiRenderSystem = coordinator->RegisterSystem<UIRenderSystem>();
+  {
+    Signature sig;
+    sig.set(coordinator->GetComponentType<Transform>());
+    sig.set(coordinator->GetComponentType<UIElement>());
+    coordinator->SetSystemSignature<UIRenderSystem>(sig);
+  }
 
-void MenuState::Init()
-{
-	menuItems.push_back(MenuItem{ "Continue", 500.0f, 750.0f, 1.0f, glm::vec3(1.0f,1.0f,1.0f), CONT });
-	menuItems.push_back(MenuItem{ "Quit", 500.0f, 500.0f, 1.0f, glm::vec3(1.0f,1.0f,1.0f), QUIT });
+  uiRenderSystem->Init();
+
+  auto uiCollisionSystem = coordinator->RegisterSystem<UICollisionSystem>();
+  {
+    Signature sig;
+    sig.set(coordinator->GetComponentType<UIElement>());
+    coordinator->SetSystemSignature<UICollisionSystem>(sig);
+  }
 }
 
-void MenuState::Cleanup()
-{
-	menuItems.clear();
+void MenuState::Init() {
+  DisplayManager *displayManager = &DisplayManager::getInstance();
+  displayManager->toggleCursor();
+  Coordinator *coordinator = &Coordinator::GetInstance();
+
+  Entity cont = coordinator->CreateEntity();
+  coordinator->AddComponent(
+      cont, UIElement{"Continue", 1.0f, glm::vec3(1.0, 1.0, 1.0), CONT});
+  coordinator->AddComponent(cont, Transform{glm::vec3(250.0f, 600.0f, 0.0f),
+                                            glm::vec3(1.0f, 1.0f, 1.0f),
+                                            glm::vec3(1.0f, 1.0f, 1.0f)});
+
+  Entity quit = coordinator->CreateEntity();
+  coordinator->AddComponent(
+      quit, UIElement{"Quit", 1.0f, glm::vec3(1.0, 1.0, 1.0), QUIT});
+  coordinator->AddComponent(quit, Transform{glm::vec3(250.0f, 450.0f, 0.0f),
+                                            glm::vec3(1.0f, 1.0f, 1.0f),
+                                            glm::vec3(1.0f, 1.0f, 1.0f)});
+  m_Entities.push_back(cont);
+  m_Entities.push_back(quit);
 }
 
-void MenuState::Pause()
-{
+void MenuState::Cleanup() {
+  Coordinator *coordinator = &Coordinator::GetInstance();
+  for (auto e : m_Entities) {
+    coordinator->DestroyEntity(e);
+  }
+  m_Entities.clear();
 }
 
-void MenuState::Resume()
-{
+void MenuState::Pause() {}
+
+void MenuState::Resume() {}
+
+void MenuState::HandleEvents(GameManager *pManager) {
+  Coordinator *coordinator = &Coordinator::GetInstance();
+  auto collider = coordinator->GetSystem<UICollisionSystem>();
+  collider->Update(glm::vec2(pManager->m_mouseX, pManager->m_mouseY),
+                   pManager->m_mouse_buttons, pManager);
 }
 
-void MenuState::HandleEvents(GameManager * pManager)
-{
-        DisplayManager* displayManager = &DisplayManager::getInstance();
-	double xpos, ypos;
-	glfwGetCursorPos(displayManager->getWindow(), &xpos, &ypos);
+void MenuState::Update(GameManager *pManager) {}
 
-	
-
-	//check for collision between cursor and menu elements
-	for (MenuItem& item : menuItems)
-	{
-		bool collided = item.checkCollision(xpos, ypos);
-		if (collided)
-		{
-			if (glfwGetMouseButton(displayManager->getWindow(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-			{
-				MenuCommand menuCommand = (MenuCommand) item.menuCommand;
-
-				switch (menuCommand)
-				{
-					case QUIT:
-						pManager->Cleanup();
-						pManager->Quit();
-						break;
-					case CONT:
-					default:
-					        DisplayManager::getInstance().toggleCursor();
-						pManager->PopState();
-						break;
-				}
-			}
-		}
-	}
-}
-
-void MenuState::Update(GameManager * pManager)
-{
-
-}
-
-void MenuState::Draw(GameManager * pManager)
-{
-	MasterRenderer* renderer = pManager->renderer;
-	
-	for (MenuItem& mi : menuItems)
-	{
-		renderer->Process2DText(mi);
-	}
-	renderer->RenderMenu();
+void MenuState::Draw(GameManager *pManager) {
+  Coordinator *coordinator = &Coordinator::GetInstance();
+  auto uirenderer = coordinator->GetSystem<UIRenderSystem>();
+  uirenderer->Render();
 }
