@@ -13,7 +13,6 @@ class RenderSystem : public System {
   RenderSystem();
   void Init();  
   void Render();
-  void GenerateTerrainModel(const std::string& name);
  private:
   Shader m_shader;
   Entity m_camera;

@@ -3,11 +3,16 @@
 #include "../Components/Camera.h"
 #include "../Components/Renderable.h"
 #include "../Components/Transform.h"
+#include "../Components/Texture.h"
+#include "../Components/Collidable.h"
 
 #include "../States/MenuState.h"
+
 #include "../System/ControlSystem.h"
 #include "../System/RenderSystem.h"
 #include "../System/ChunkSystem.h"
+#include "../System/CollisionSystem.h"
+
 
 #include <math.h>
 
@@ -18,11 +23,15 @@ RunState::RunState() {
   coordinator->RegisterComponent<Camera>();
   coordinator->RegisterComponent<Renderable>();
   coordinator->RegisterComponent<Transform>();
+  coordinator->RegisterComponent<Texture>();
+  coordinator->RegisterComponent<Collidable>();
+  
   auto renderSystem = coordinator->RegisterSystem<RenderSystem>();
   {
     Signature sig;
     sig.set(coordinator->GetComponentType<Renderable>());
     sig.set(coordinator->GetComponentType<Transform>());
+    sig.set(coordinator->GetComponentType<Texture>());
     coordinator->SetSystemSignature<RenderSystem>(sig);
   }
 
@@ -40,14 +49,24 @@ RunState::RunState() {
     coordinator->SetSystemSignature<ChunkSystem>(sig);
   }
 
+  auto collisionSystem = coordinator->RegisterSystem<CollisionSystem>();
+  {
+    Signature sig;
+    sig.set(coordinator->GetComponentType<Collidable>());
+    sig.set(coordinator->GetComponentType<Transform>());
+    coordinator->SetSystemSignature<CollisionSystem>(sig);
+  }
+  
   renderSystem->Init();
   chunkSystem->Init();
   
   Entity e = coordinator->CreateEntity();
-  coordinator->AddComponent(e, Renderable{"dragon", "dragon"});
+  coordinator->AddComponent(e, Renderable{"dragon"});
+  coordinator->AddComponent(e, Texture {"box", 20.0f});
   coordinator->AddComponent(e, Transform{glm::vec3(0.0f, -2.0f, -20.0f),
                                          glm::vec3(1.0f, 1.0f, 1.0f),
-                                         glm::vec3(1.0f, 1.0f, 1.0f)});
+                                         glm::vec3(50.0f, 50.0f, 50.0f)});
+  coordinator->AddComponent(e, Collidable {"dragon"});
   m_Entities.push_back(e);
 }
 
@@ -86,6 +105,8 @@ void RunState::HandleEvents(GameManager *pManager) {
 void RunState::Update(GameManager *pManager) {
   Coordinator *coordinator = &Coordinator::GetInstance();
   auto chunkSystem = coordinator->GetSystem<ChunkSystem>();
+  auto collisionSystem = coordinator->GetSystem<CollisionSystem>();
+  collisionSystem->Update();
   chunkSystem->Update();
 }
 

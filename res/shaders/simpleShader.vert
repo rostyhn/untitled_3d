@@ -6,11 +6,13 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform float tileAmount;
+
 out vec4 ourColor;
 out vec2 TexCoord;
 
 void main() {
      gl_Position = projection * view * model * vec4(aPos, 1.0f);
      ourColor = vec4(1.0,0.0,0.0,1.0);
-     TexCoord = vec2(aTexCoord.x, aTexCoord.y);
+     TexCoord = vec2(aTexCoord.x, aTexCoord.y) * tileAmount;
 }

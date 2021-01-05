@@ -28,6 +28,9 @@ void OBJLoader::LoadObjModel(const std::string& fileName, Loader* loader)
   std::vector<glm::vec3> vertices, normals, tempNormals;
   std::vector<int> indices;
 
+  double minX, minY, minZ = std::numeric_limits<float>::max();
+  double maxX, maxY, maxZ = std::numeric_limits<float>::min();
+  
   char *type, *token, *stop = 0;
   double x, y, z;
   char line[256];
@@ -39,10 +42,28 @@ void OBJLoader::LoadObjModel(const std::string& fileName, Loader* loader)
       if (type[0] == 'v' && type[1] == NULL)
 	{
 	  x = strtod(token, &stop);
+	  if(x > maxX) {
+	    maxX = x;
+	  }
+	  if(x < minX) {
+	    minX = x;
+	  }
 	  token = stop + 1; // Move to the next value
 	  y = strtod(token, &stop);
+	  if(y > maxY) {
+	    maxY = y;
+	  }
+	  if(y < minY) {
+	    minY = y;
+	  }
 	  token = stop + 1; // Move to the next value
 	  z = strtod(token, &stop);
+	  if(z > maxZ) {
+	    maxZ = z;
+	  }
+	  if(z < minZ) {
+	    minZ = z;
+	  }
 	  // Store a new vertex
 	  vertices.push_back(glm::vec3(x, y, z));
 	}
@@ -80,8 +101,10 @@ void OBJLoader::LoadObjModel(const std::string& fileName, Loader* loader)
     }
   fclose(file);
 
-  printf("Load time: %dms\n", clock() - startTime);
-  loader->LoadToVAO(vertices, textures, normals, indices, fileName);
+  std::vector<float> bBox = { (float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ };
+
+  //printf("Load time: %dms\n", clock() - startTime);
+  loader->LoadToVAO(vertices, textures, normals, indices, fileName, bBox);
 }
 
 

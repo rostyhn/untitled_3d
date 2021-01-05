@@ -38,7 +38,7 @@ Loader::~Loader()
 }
 
 
-void Loader::LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> textures, std::vector<glm::vec3> normals, std::vector<int> indices, const std::string& name)
+void Loader::LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> textures, std::vector<glm::vec3> normals, std::vector<int> indices, const std::string& name, std::vector<float> bBox)
 {
   // create a new VAO
   GLuint vaoID = CreateVAO(name);
@@ -46,11 +46,16 @@ void Loader::LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> t
   m_vertSize.insert(std::pair<const std::string, int>(name, indicesSize));
   BindIndicesBuffer(indices.data(), indicesSize);
   // Store the data in attribute lists
+  StoreBoundingBox(name, bBox);
   StoreDataInAttributeList(0, 3, &vertices[0], vertices.size() * sizeof(glm::vec3));
   StoreDataInAttributeList(1, 2, &textures[0], textures.size() * sizeof(glm::vec2));
   StoreDataInAttributeList(2, 3, &normals[0], normals.size() * sizeof(glm::vec3));
   UnbindVAO();
   
+}
+
+std::vector<float> Loader::GetBoundingBox(const std::string& modelName) {
+  return m_boundingBoxes[modelName];
 }
 
 GLuint Loader::GetVAO(const std::string& modelName) {
@@ -90,11 +95,10 @@ void Loader::LoadTexture(const std::string& fileName, bool repeat)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   // Allow repeating textures for terrain
-  if(repeat) {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  if(!repeat) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
-
     
   // Store the OpenGL texture data
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
@@ -120,6 +124,10 @@ GLuint Loader::CreateVAO(const std::string& name)
   // Bind the VAO to use it
   glBindVertexArray(vaoID);
   return vaoID;
+}
+
+void Loader::StoreBoundingBox(const std::string& name, std::vector<float> bBox) {
+  m_boundingBoxes.insert(std::pair<const std::string, std::vector<float>>(name, bBox));
 }
 
 

@@ -81,7 +81,7 @@ void UIRenderSystem::Init() {
 void UIRenderSystem::Render() {
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-
+  glDisable(GL_DEPTH_TEST);
   m_shader.use();
   Coordinator* coordinator = &Coordinator::GetInstance();
   m_shader.setMat4("projection", m_orthographic);

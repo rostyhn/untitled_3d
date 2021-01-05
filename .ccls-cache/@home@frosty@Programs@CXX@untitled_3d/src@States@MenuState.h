@@ -1,9 +1,8 @@
 #ifndef MENUSTATE_H
 #define MENUSTATE_H
 
-#include "../src/States/GameState.h"
-#include "../src/States/RunState.h"
-#include "../src/UI/MenuItem.h"
+#include "GameState.h"
+#include "RunState.h"
 
 //temp for now just to test that the menu system works 
 
@@ -26,11 +25,7 @@ public:
 	}
 
 protected:
-	MenuState() {}
-
-private:
-	//for now lets just set up a vector of stuff to render
-	std::vector<MenuItem> menuItems;
+   MenuState();
 };
 
 #endif // !MENUSTATE_H
