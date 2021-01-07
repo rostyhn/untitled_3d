@@ -5,6 +5,8 @@
 #include "../Components/Renderable.h"
 #include "../Components/Camera.h"
 #include "../Components/Collidable.h"
+#include "../Components/AABB.h"
+#include "../Toolbox/Maths.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
 
@@ -24,7 +26,7 @@ void RenderSystem::Init() {
   m_loader->LoadTexture("scape", true);
   m_loader->LoadTexture("scape_alt", true);
   m_loader->LoadTexture("grassy2", true);
-  m_loader->LoadTexture("cube", false);
+  m_loader->LoadTexture("cube", true);
   
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -33,7 +35,8 @@ void RenderSystem::Init() {
   m_camera = coordinator->CreateEntity();
   coordinator->AddComponent(m_camera, Camera { glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f) });
   coordinator->AddComponent(m_camera, Transform { glm::vec3(400.0f, 2.0f, 400.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(1.0f,1.0f,1.0f) });
-  coordinator->AddComponent(m_camera, Collidable { -0.5f, -1.0f, -0.5f, 0.5f, 1.0f, 0.5f }); 
+  coordinator->AddComponent(m_camera, Collidable { BoundingBox, false });
+  coordinator->AddComponent(m_camera, AABB { -1.0, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f }); 
 }
 
 void RenderSystem::Render() {
@@ -56,8 +59,8 @@ void RenderSystem::Render() {
     auto const& transform = coordinator->GetComponent<Transform>(e);
     auto const& renderable = coordinator->GetComponent<Renderable>(e);
     auto const& texture = coordinator->GetComponent<Texture>(e);
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), transform.position);
-    model = glm::scale(model, transform.scale);
+    glm::mat4 model = Maths::CreateTransformMatrix(transform.position, transform.rotation, transform.scale);
+    
     m_shader.setMat4("model", model);
     glActiveTexture(GL_TEXTURE0);
     m_shader.setInt("ourTexture",0);

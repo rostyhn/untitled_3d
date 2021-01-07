@@ -28,8 +28,8 @@ void OBJLoader::LoadObjModel(const std::string& fileName, Loader* loader)
   std::vector<glm::vec3> vertices, normals, tempNormals;
   std::vector<int> indices;
 
-  double minX, minY, minZ = std::numeric_limits<float>::max();
-  double maxX, maxY, maxZ = std::numeric_limits<float>::min();
+  double minX, minY, minZ = std::numeric_limits<double>::max();
+  double maxX, maxY, maxZ = std::numeric_limits<double>::min();
   
   char *type, *token, *stop = 0;
   double x, y, z;

@@ -29,9 +29,10 @@ public:
 protected:
   RunState();
 private:
-	float t;
-	float dt;
-	bool paused = false;
-	void simulate(float dt);
+  bool paused = false;
+  
+  //eventually, https://gafferongames.com/post/fix_your_timestep/
+  double t = 0.0;
+  const double dt = 0.01;
 };
 #endif // !RUNSTATE_H

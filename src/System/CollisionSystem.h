@@ -3,6 +3,7 @@
 
 #include "../Components/Collidable.h"
 #include "../Components/Transform.h"
+#include "../Components/AABB.h"
 #include "System.h"
 #include <vector>
 
@@ -12,6 +13,7 @@ public:
   CollisionSystem() {}
   void Update();
 private:
-  std::vector<float> CalculateBoundingBox(Collidable bBox, Transform transform);
+  std::vector<float> ReturnExtents(Entity e, CollidableType ct, Transform transform);
+  std::vector<float> CalculateBoundingBox(AABB bBox, Transform transform);
 };
 #endif

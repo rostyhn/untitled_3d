@@ -5,6 +5,7 @@
 #include "../Components/Transform.h"
 #include "../Components/Texture.h"
 #include "../Components/Collidable.h"
+#include "../Components/AABB.h"
 
 #include "../States/MenuState.h"
 
@@ -13,8 +14,8 @@
 #include "../System/ChunkSystem.h"
 #include "../System/CollisionSystem.h"
 
-
 #include <math.h>
+#include <glm/glm.hpp>
 
 RunState::RunState() {
   // can be anywhere
@@ -25,6 +26,7 @@ RunState::RunState() {
   coordinator->RegisterComponent<Transform>();
   coordinator->RegisterComponent<Texture>();
   coordinator->RegisterComponent<Collidable>();
+  coordinator->RegisterComponent<AABB>();
   
   auto renderSystem = coordinator->RegisterSystem<RenderSystem>();
   {
@@ -64,16 +66,16 @@ RunState::RunState() {
   coordinator->AddComponent(e, Renderable{"dragon"});
   coordinator->AddComponent(e, Texture {"box", 20.0f});
   coordinator->AddComponent(e, Transform{glm::vec3(0.0f, -2.0f, -20.0f),
-                                         glm::vec3(1.0f, 1.0f, 1.0f),
-                                         glm::vec3(50.0f, 50.0f, 50.0f)});
-  coordinator->AddComponent(e, Collidable {"dragon"});
+                                         glm::vec3(0.0f, 0.0f, 0.0f),
+                                         glm::vec3(2.0f, 2.0f, 2.0f)
+                                         });
+  coordinator->AddComponent(e, Collidable {BoundingBox, false});
+  coordinator->AddComponent(e, AABB {"dragon"});
+  
   m_Entities.push_back(e);
 }
 
-void RunState::Init() {
-  srand(time(0));
-  this->t = 0.0;
-  this->dt = 0.01;
+void RunState::Init() {  
   DisplayManager::getInstance().toggleCursor();
 }
 
@@ -103,6 +105,8 @@ void RunState::HandleEvents(GameManager *pManager) {
 }
 
 void RunState::Update(GameManager *pManager) {
+
+  
   Coordinator *coordinator = &Coordinator::GetInstance();
   auto chunkSystem = coordinator->GetSystem<ChunkSystem>();
   auto collisionSystem = coordinator->GetSystem<CollisionSystem>();
@@ -114,4 +118,5 @@ void RunState::Draw(GameManager *pManager) {
   Coordinator *coordinator = &Coordinator::GetInstance();
   auto renderer = coordinator->GetSystem<RenderSystem>();
   renderer->Render();
+  t += dt;
 }
