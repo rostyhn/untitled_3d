@@ -61,18 +61,22 @@ RunState::RunState() {
   
   renderSystem->Init();
   chunkSystem->Init();
+
+  srand(time(0));
   
-  Entity e = coordinator->CreateEntity();
-  coordinator->AddComponent(e, Renderable{"dragon"});
-  coordinator->AddComponent(e, Texture {"box", 20.0f});
-  coordinator->AddComponent(e, Transform{glm::vec3(0.0f, -2.0f, -20.0f),
-                                         glm::vec3(0.0f, 0.0f, 0.0f),
+  for(int i = 0; i < 1000; i++) {
+    Entity e = coordinator->CreateEntity();
+    coordinator->AddComponent(e, Renderable{"box"});
+    coordinator->AddComponent(e, Texture {"box", 20.0f});
+
+    coordinator->AddComponent(e, Transform{glm::vec3(rand() % 10000, rand() % 10000, rand() % 10000),
+					   glm::vec3(0.0f, 0.0f, 0.0f),
                                          glm::vec3(2.0f, 2.0f, 2.0f)
                                          });
-  coordinator->AddComponent(e, Collidable {BoundingBox, false});
-  coordinator->AddComponent(e, AABB {"dragon"});
+    coordinator->AddComponent(e, Collidable {"box", false});
   
-  m_Entities.push_back(e);
+    m_Entities.push_back(e);
+  }
 }
 
 void RunState::Init() {  
