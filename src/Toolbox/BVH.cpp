@@ -1,171 +1,266 @@
 #include "BVH.h"
 #include "../Components/Texture.h"
+#include <stack>
 
-void BVH::UpdateNodeHelper(Node *node) {
+#define AABB_NULL_NODE 0xffffffff
 
+BVH::BVH(unsigned initalSize) : m_rootNodeIndex(AABB_NULL_NODE), m_allocatedNodeCount(0), m_nextFreeNodeIndex(0), m_nodeCapacity(initalSize), m_growthSize(initalSize) {
+  m_nodes.resize(initalSize);
   
-  if (node->IsLeaf()) {
-    Node moved = Node{node->m_entity};
-    moved.CalculateBoundingBox(0.0f);
-    if ((moved.m_minX < node->m_minX || moved.m_minY < node->m_minY ||
-         moved.m_minZ < node->m_minZ) ||
-        (moved.m_maxX > node->m_maxX || moved.m_maxY > node->m_maxY ||
-         moved.m_maxZ > node->m_maxZ)) {
-      m_invalidNodes.push_back(node);
-    }
-  } else {
-    UpdateNodeHelper(node->m_children[0]);
-    UpdateNodeHelper(node->m_children[1]);
+  for(unsigned ni = 0; ni < initalSize; ni++) {
+    BVHNode& node = m_nodes[ni];
+    node.m_nextNodeIndex = ni+1;
   }
+  m_nodes[initalSize-1].m_nextNodeIndex = AABB_NULL_NODE;
 }
 
-void BVH::Add(Entity e) {
-  if (m_root) {
-    Node *node = new Node(e);
-    node->SetLeaf(e);
-    node->CalculateBoundingBox(m_margin);
-    InsertNode(node, &m_root);
-  } else {
-    m_root = new Node(e);
-    m_root->SetLeaf(e);
-    m_root->CalculateBoundingBox(m_margin);
-    m_root->m_parent = nullptr;
+
+BVH::~BVH() {
+}
+
+unsigned BVH::AllocateNode() {
+
+  if(m_nextFreeNodeIndex == AABB_NULL_NODE) {
+
+    assert(m_allocatedNodeCount == m_nodeCapacity);
+
+    m_nodeCapacity += m_growthSize;
+    m_nodes.resize(m_nodeCapacity);
+    for(unsigned ni = 0; ni < m_nodeCapacity; ni++) {
+      BVHNode& node = m_nodes[ni];
+      node.m_nextNodeIndex = ni+1;
+    }
+    
+    m_nodes[m_nodeCapacity -1].m_nextNodeIndex = AABB_NULL_NODE;
+    m_nextFreeNodeIndex = m_allocatedNodeCount;
+    
   }
+
+  unsigned nodeIndex = m_nextFreeNodeIndex;
+  BVHNode& newNode = m_nodes[nodeIndex];
+  newNode.m_parentNodeIndex = AABB_NULL_NODE;
+  newNode.m_leftNodeIndex = AABB_NULL_NODE;
+  newNode.m_rightNodeIndex = AABB_NULL_NODE;
+  m_nextFreeNodeIndex = newNode.m_nextNodeIndex;
+  m_allocatedNodeCount++;
+
+  return nodeIndex;
+  
+}
+
+void BVH::DeallocateNode(unsigned nodeIndex) {
+  BVHNode& deletedNode = m_nodes[nodeIndex];
+  deletedNode.m_nextNodeIndex = m_nextFreeNodeIndex;
+  m_nextFreeNodeIndex = nodeIndex;
+  m_allocatedNodeCount--;
+}
+
+void BVH::Add(const Entity e) {
+  unsigned nodeIndex = AllocateNode();
+  BVHNode& node = m_nodes[nodeIndex];
+
+  node.BindEntity(e);
+  //make sure to have the bBox calculated in world coords
+  node.CalculateBoundingBox(m_margin);
+  InsertLeaf(nodeIndex);
+  m_entityNodeMap[e] = nodeIndex;
   m_Entities.insert(e);
 }
 
-void BVH::InsertNode(Node *node, Node **parent) {
-  Node *p = *parent;
-  if (p->IsLeaf()) {
-    Node *newParent = new Node();
-    newParent->m_parent = p->m_parent;
-    newParent->SetBranch(node, p);
-    *parent = newParent;
-  } else {
+void BVH::Remove(const Entity e) {
+  unsigned nodeIndex = m_entityNodeMap[e];
+  RemoveLeaf(nodeIndex);
+  DeallocateNode(nodeIndex);
+  m_entityNodeMap.erase(e);
+  m_Entities.erase(e);
+}
 
-    float volDiff0 =
-        p->m_children[0]->Union(node).Volume() - p->m_children[0]->Volume();
-    float volDiff1 =
-        p->m_children[1]->Union(node).Volume() - p->m_children[1]->Volume();
+void BVH::Update(const Entity e) {
+  unsigned nodeIndex = m_entityNodeMap[e];
+  UpdateLeaf(nodeIndex);
+}
 
-    if (volDiff0 < volDiff1) {
-      InsertNode(node, &p->m_children[0]);
+
+void BVH::InsertLeaf(unsigned leafNodeIndex) {
+  
+  assert(m_nodes[leafNodeIndex].m_parentNodeIndex == AABB_NULL_NODE);
+  assert(m_nodes[leafNodeIndex].m_leftNodeIndex == AABB_NULL_NODE);
+  assert(m_nodes[leafNodeIndex].m_rightNodeIndex == AABB_NULL_NODE);
+
+  if(m_rootNodeIndex == AABB_NULL_NODE) {
+    m_rootNodeIndex = leafNodeIndex;
+    return;
+  }
+
+  unsigned treeNodeIndex = m_rootNodeIndex;
+  BVHNode& leafNode = m_nodes[leafNodeIndex];
+  
+  while(!m_nodes[treeNodeIndex].IsLeaf()) {
+    BVHNode& treeNode = m_nodes[treeNodeIndex];
+    unsigned leftNodeIndex = treeNode.m_leftNodeIndex;
+    unsigned rightNodeIndex = treeNode.m_rightNodeIndex;
+    BVHNode& leftNode = m_nodes[leftNodeIndex];
+    BVHNode& rightNode = m_nodes[rightNodeIndex];
+
+    AABB combinedAABB = treeNode.aabb.Merge(&leafNode.aabb);
+    float newParentCost = 2.0f * combinedAABB.m_surfaceArea;
+    float minPushDownCost = 2.0f * (combinedAABB.m_surfaceArea - treeNode.aabb.m_surfaceArea);
+    
+    float costLeft;
+    float costRight;
+    
+    if(leftNode.IsLeaf()) {
+      costLeft = leafNode.aabb.Merge(&leftNode.aabb).m_surfaceArea + minPushDownCost;
     } else {
-      InsertNode(node, &p->m_children[1]);
+      AABB newLeftAABB = leafNode.aabb.Merge(&leftNode.aabb);
+      costLeft = (newLeftAABB.m_surfaceArea - leftNode.aabb.m_surfaceArea) + minPushDownCost;
+    }
+    
+    if(rightNode.IsLeaf()) {
+      costRight = leafNode.aabb.Merge(&rightNode.aabb).m_surfaceArea + minPushDownCost;
+    } else {
+      AABB newRightAABB = leafNode.aabb.Merge(&rightNode.aabb);
+      costRight = (newRightAABB.m_surfaceArea - rightNode.aabb.m_surfaceArea) + minPushDownCost;
+    }
+
+    if(newParentCost < costLeft && newParentCost < costRight) {
+      break; //stupid way to get out but w/e
+    }
+
+    if(costLeft < costRight) {
+      treeNodeIndex = leftNodeIndex;
+    } else {
+      treeNodeIndex = rightNodeIndex;
     }
   }
-  (*parent)->CalculateBoundingBox(m_margin);
-}
 
-/*void BVH::Remove(Entity e) {
+  unsigned leafSiblingIndex = treeNodeIndex;
+  BVHNode& leafSibling = m_nodes[leafSiblingIndex];
 
-  }*/
+  unsigned oldParentIndex = leafSibling.m_parentNodeIndex;
+  unsigned newParentIndex = AllocateNode();
 
-void BVH::RemoveNode(Node *node) {
-  Node *parent = node->m_parent;
-  if (parent) {
-    Node *sibling = node->GetSibling();
-    if (parent->m_parent) {
-      sibling->m_parent = parent->m_parent;
-      (parent == parent->m_parent->m_children[0]
-           ? parent->m_parent->m_children[0]
-           : parent->m_parent->m_children[1]) = sibling;
-    } else {
-      Node *sib = node->GetSibling();
-      m_root = sib;
-      sib->m_parent = nullptr;
-    }
+  BVHNode& newParent = m_nodes[newParentIndex];
+  
+  newParent.m_parentNodeIndex = oldParentIndex;
+  newParent.aabb = leafNode.aabb.Merge(&leafSibling.aabb);
+
+  newParent.m_leftNodeIndex = leafSiblingIndex;
+  newParent.m_rightNodeIndex = leafNodeIndex;
+  leafNode.m_parentNodeIndex = newParentIndex;
+  leafSibling.m_parentNodeIndex = newParentIndex;
+
+  if(oldParentIndex == AABB_NULL_NODE) {
+    m_rootNodeIndex = newParentIndex;
   } else {
-    m_root = nullptr;
-    delete node;
+    BVHNode& oldParent = m_nodes[oldParentIndex];
+    if(oldParent.m_leftNodeIndex == leafSiblingIndex) {
+      oldParent.m_leftNodeIndex = newParentIndex;
+    } else {
+      oldParent.m_rightNodeIndex = newParentIndex;
+    }
+  }
+  treeNodeIndex = leafNode.m_parentNodeIndex;
+  FixUpwardsTree(treeNodeIndex);
+}
+
+void BVH::RemoveLeaf(unsigned leafNodeIndex) {
+
+  if(leafNodeIndex == m_rootNodeIndex) {
+    m_rootNodeIndex = AABB_NULL_NODE;
+    return;
+  }
+
+  
+  BVHNode& leafNode = m_nodes[leafNodeIndex];
+  unsigned parentNodeIndex = leafNode.m_parentNodeIndex;
+  BVHNode& parentNode = m_nodes[parentNodeIndex];
+  unsigned grandParentNodeIndex = parentNode.m_parentNodeIndex;
+  unsigned siblingNodeIndex = parentNode.m_leftNodeIndex == leafNodeIndex ? parentNode.m_rightNodeIndex : parentNode.m_leftNodeIndex;
+  assert(siblingNodeIndex != AABB_NULL_NODE);
+  BVHNode& siblingNode = m_nodes[siblingNodeIndex];
+  
+  if(grandParentNodeIndex != AABB_NULL_NODE) {
+
+    BVHNode& grandParentNode = m_nodes[grandParentNodeIndex];
+
+    if(grandParentNode.m_leftNodeIndex == parentNodeIndex) {
+      grandParentNode.m_leftNodeIndex = siblingNodeIndex;
+    } else {
+      grandParentNode.m_rightNodeIndex = siblingNodeIndex;
+    }
+    siblingNode.m_parentNodeIndex = grandParentNodeIndex;
+    DeallocateNode(parentNodeIndex);
+    FixUpwardsTree(grandParentNodeIndex);
+  } else {
+    m_rootNodeIndex = siblingNodeIndex;
+    siblingNode.m_parentNodeIndex = AABB_NULL_NODE;
+    DeallocateNode(parentNodeIndex);
+  }
+  leafNode.m_parentNodeIndex = AABB_NULL_NODE;  
+}
+
+void BVH::UpdateLeaf(unsigned leafNodeIndex) {
+  BVHNode& fattened = m_nodes[leafNodeIndex];
+  BVHNode moved = BVHNode { };
+  moved.BindEntity(moved.m_entity);
+  moved.CalculateBoundingBox(0.0f);
+
+  //check if fattened aabb contains moved
+  if (fattened.aabb.Contains(moved.aabb)) {
+    return;
+  }
+  
+  RemoveLeaf(leafNodeIndex);
+  
+  fattened.aabb.m_minX = moved.aabb.m_minX - m_margin;
+  fattened.aabb.m_minY = moved.aabb.m_minY - m_margin;
+  fattened.aabb.m_minZ = moved.aabb.m_minZ - m_margin;
+  fattened.aabb.m_maxX = moved.aabb.m_maxX + m_margin;
+  fattened.aabb.m_maxY = moved.aabb.m_maxY + m_margin;
+  fattened.aabb.m_maxZ = moved.aabb.m_maxZ + m_margin;
+  fattened.aabb.m_surfaceArea = fattened.aabb.SurfaceArea();
+  
+  
+  InsertLeaf(leafNodeIndex);
+}
+
+void BVH::FixUpwardsTree(unsigned treeNodeIndex) {
+  while(treeNodeIndex != AABB_NULL_NODE) {
+    BVHNode& treeNode = m_nodes[treeNodeIndex];
+
+    assert(treeNode.m_leftNodeIndex != AABB_NULL_NODE && treeNode.m_rightNodeIndex != AABB_NULL_NODE);
+
+    BVHNode& leftNode = m_nodes[treeNode.m_leftNodeIndex];
+    BVHNode& rightNode = m_nodes[treeNode.m_rightNodeIndex];
+
+    treeNode.aabb = leftNode.aabb.Merge(&rightNode.aabb);
+    treeNode.aabb.m_surfaceArea = treeNode.aabb.SurfaceArea();
+
+    //rotate(index);
+    treeNodeIndex = treeNode.m_parentNodeIndex;    
   }
 }
 
-std::vector<ColliderPair> BVH::ComputePairs() {
-  m_cp.clear();
- 
-  if (!m_root || m_root->IsLeaf())
-    return m_cp;
-  //switch to using a stack
-  ClearChildrenCrossedFlag(m_root);
-  ComputePairsHelper(m_root->m_children[0], m_root->m_children[1]);
-  return m_cp;
-}
+std::forward_list<Entity> BVH::QueryOverlaps(const Entity e) {
+  std::forward_list<Entity> overlaps;
+  std::stack<unsigned> stack;
+  BVHNode& startNode = m_nodes[m_entityNodeMap[e]];
+  stack.push(m_rootNodeIndex);
 
-void BVH::ClearChildrenCrossedFlag(Node *node) {
-  node->m_childrenCrossed = false;
-  if (!node->IsLeaf()) {
-    ClearChildrenCrossedFlag(node->m_children[0]);
-    ClearChildrenCrossedFlag(node->m_children[1]);
-  }
-}
-
-void BVH::CrossChildren(Node *node) {
-  if (!node->m_childrenCrossed) {
-    ComputePairsHelper(node->m_children[0], node->m_children[1]);
-    node->m_childrenCrossed = true;
-  }
-}
-
-void BVH::ComputePairsHelper(Node *n0, Node *n1) {
-  if (n0->IsLeaf()) {
-    if (n1->IsLeaf()) {
-      if ((n0->m_minX <= n1->m_maxX && n0->m_maxX >= n1->m_minX) &&
-          (n0->m_minY <= n1->m_maxY && n0->m_maxY >= n1->m_minY) &&
-          (n0->m_minZ <= n1->m_maxZ && n0->m_maxZ >= n1->m_minZ)) {
-        m_cp.push_back(ColliderPair{n0->m_entity, n1->m_entity});
+  while(!stack.empty()) {
+    unsigned nodeIndex = stack.top();
+    stack.pop();
+    if(nodeIndex == AABB_NULL_NODE) continue;
+    BVHNode& node = m_nodes[nodeIndex];
+    if(node.aabb.Overlaps(startNode.aabb)) {
+      if(node.IsLeaf() && node.m_entity != startNode.m_entity) {
+	overlaps.push_front(node.m_entity);
+      } else {
+	stack.push(node.m_leftNodeIndex);
+	stack.push(node.m_rightNodeIndex);
       }
-    } else {
-      CrossChildren(n1);
-      ComputePairsHelper(n0, n1->m_children[0]);
-      ComputePairsHelper(n0, n1->m_children[1]);
-    }
-  } else {
-    if (n1->IsLeaf()) {
-      CrossChildren(n0);
-      ComputePairsHelper(n0->m_children[0], n1);
-      ComputePairsHelper(n0->m_children[1], n1);
-    } else {
-      CrossChildren(n0);
-      CrossChildren(n1);
-      ComputePairsHelper(n0->m_children[0], n1->m_children[0]);
-      ComputePairsHelper(n0->m_children[0], n1->m_children[1]);
-      ComputePairsHelper(n0->m_children[1], n1->m_children[0]);
-      ComputePairsHelper(n0->m_children[1], n1->m_children[1]);
     }
   }
-}
-
-void BVH::Update() {
-  if (m_root) {
-    if (m_root->IsLeaf()) {
-      m_root->CalculateBoundingBox(m_margin);
-    } else {
-      m_invalidNodes.clear();
-      UpdateNodeHelper(m_root);
-
-      for (Node *node : m_invalidNodes) {
-        Node *parent = node->m_parent;
-        Node *sibling = node->GetSibling();
-	Node **parentLink = parent->m_parent
-            ? (parent == parent->m_parent->m_children[0]
-                ? &parent->m_parent->m_children[0]
-                : &parent->m_parent->m_children[1])
-            : &m_root;
-        // replace parent with sibling
-        sibling->m_parent =
-          parent->m_parent
-            ? parent->m_parent
-            : nullptr; // root has null parent
-
-        *parentLink = sibling;
-        delete parent;
-        
-        // re-insert node
-        node->CalculateBoundingBox(m_margin);
-        InsertNode(node, &m_root);
-      }
-      m_invalidNodes.clear();
-    }
-  }
+  return overlaps;
 }

@@ -6,6 +6,7 @@
 #include "../Components/Texture.h"
 #include "../Components/Collidable.h"
 #include "../Components/AABB.h"
+#include "../Components/Physics.h"
 
 #include "../States/MenuState.h"
 
@@ -13,6 +14,7 @@
 #include "../System/RenderSystem.h"
 #include "../System/ChunkSystem.h"
 #include "../System/CollisionSystem.h"
+#include "../System/PhysicsSystem.h"
 
 #include <math.h>
 #include <glm/glm.hpp>
@@ -26,7 +28,7 @@ RunState::RunState() {
   coordinator->RegisterComponent<Transform>();
   coordinator->RegisterComponent<Texture>();
   coordinator->RegisterComponent<Collidable>();
-  coordinator->RegisterComponent<AABB>();
+  coordinator->RegisterComponent<Physics>();
   
   auto renderSystem = coordinator->RegisterSystem<RenderSystem>();
   {
@@ -58,25 +60,32 @@ RunState::RunState() {
     sig.set(coordinator->GetComponentType<Transform>());
     coordinator->SetSystemSignature<CollisionSystem>(sig);
   }
+
+  auto physicsSystem = coordinator->RegisterSystem<PhysicsSystem>();
+  {
+    Signature sig;
+    sig.set(coordinator->GetComponentType<Physics>());
+    coordinator->SetSystemSignature<PhysicsSystem>(sig);
+  }
   
   renderSystem->Init();
   chunkSystem->Init();
 
   srand(time(0));
   
-  for(int i = 0; i < 1000; i++) {
+  for(int i = 0; i < 3; i++) {
     Entity e = coordinator->CreateEntity();
     coordinator->AddComponent(e, Renderable{"box"});
     coordinator->AddComponent(e, Texture {"box", 20.0f});
 
-    coordinator->AddComponent(e, Transform{glm::vec3(rand() % 10000, rand() % 10000, rand() % 10000),
+    coordinator->AddComponent(e, Transform{glm::vec3(rand() % 100, rand() % 100, rand() % 100),
 					   glm::vec3(0.0f, 0.0f, 0.0f),
                                          glm::vec3(2.0f, 2.0f, 2.0f)
                                          });
-    coordinator->AddComponent(e, Collidable {"box", false});
-  
+    coordinator->AddComponent(e, Collidable {"box", true});
+    //    coordinator->AddComponent(e, Physics { glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), 1.0f});
     m_Entities.push_back(e);
-  }
+   }
 }
 
 void RunState::Init() {  
@@ -108,15 +117,16 @@ void RunState::HandleEvents(GameManager *pManager) {
                      glm::vec2(pManager->m_mouseX, pManager->m_mouseY));
 }
 
-void RunState::Update(GameManager *pManager) {
-
-  
+void RunState::Update(GameManager *pManager) {  
   Coordinator *coordinator = &Coordinator::GetInstance();
   auto chunkSystem = coordinator->GetSystem<ChunkSystem>();
   auto collisionSystem = coordinator->GetSystem<CollisionSystem>();
-  collisionSystem->Update();
+  auto physicsSystem = coordinator->GetSystem<PhysicsSystem>();
   chunkSystem->Update();
-}
+  collisionSystem->Update();
+  //  physicsSystem->Update(t, dt);
+}  
+  
 
 void RunState::Draw(GameManager *pManager) {
   Coordinator *coordinator = &Coordinator::GetInstance();

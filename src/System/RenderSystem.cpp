@@ -6,6 +6,7 @@
 #include "../Components/Camera.h"
 #include "../Components/Collidable.h"
 #include "../Components/AABB.h"
+#include "../Components/Physics.h"
 #include "../Toolbox/Maths.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <GL/glew.h>
@@ -36,6 +37,7 @@ void RenderSystem::Init() {
   coordinator->AddComponent(m_camera, Camera { glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f) });
   coordinator->AddComponent(m_camera, Transform { glm::vec3(400.0f, 2.0f, 400.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(1.0f,1.0f,1.0f) });
   coordinator->AddComponent(m_camera, Collidable { -1.0, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, false });
+  //  coordinator->AddComponent(m_camera, Physics { glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), 1.0f});
 }
 
 void RenderSystem::Render() {

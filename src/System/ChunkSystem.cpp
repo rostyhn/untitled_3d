@@ -102,7 +102,7 @@ Entity ChunkSystem::LoadTerrain(const char* modelName, const char* textureName, 
   coordinator->AddComponent(e, Transform { glm::vec3(position[0],0.0f,position[1]), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(1.0f,1.0f,1.0f)});
   coordinator->AddComponent(e, Renderable { modelName });
   coordinator->AddComponent(e, Texture { textureName, 20.0f });
-  //coordinator->AddComponent(e, Collidable { modelName });
+  //coordinator->AddComponent(e, Collidable { 0.0f, -1.0f, 0.0f, 800.0f, 0.25, 800.0f, true });
   return e;
 }
 
