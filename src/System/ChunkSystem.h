@@ -22,7 +22,7 @@ private:
   //if we decide to generate random terrain
   //int m_counter = 0;
   const float SIZE = 800;
-  const float CHUNKSIZE = 11;
+  const float CHUNKSIZE = 9;
   const int CHUNKSATATIME = 3;
   const int VERTEX_COUNT = 64;
   std::map<std::pair<int, int>, std::vector<Entity>> m_Chunks;

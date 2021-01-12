@@ -9,5 +9,6 @@ public:
  void Update(const double t, const double dt);
 private:
  const float gravity = -9.8f;
+  const float friction = 0.4;
 };
 #endif

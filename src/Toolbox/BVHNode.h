@@ -13,6 +13,8 @@
 struct AABB {
 
 
+  //make it faster with balancing
+
   AABB() : m_minX(0.0f), m_minY(0.0f), m_minZ(0.0f), m_maxX(0.0f), m_maxY(0.0f), m_maxZ(0.0f), m_surfaceArea(0.0f) { }
 
 AABB(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) :
@@ -67,7 +69,7 @@ AABB(float minX, float minY, float minZ, float maxX, float maxY, float maxZ) :
 
 
 struct BVHNode {
-BVHNode() : m_entity(AABB_NULL_NODE), m_parentNodeIndex(AABB_NULL_NODE), m_leftNodeIndex(AABB_NULL_NODE), m_rightNodeIndex(AABB_NULL_NODE), m_nextNodeIndex(AABB_NULL_NODE) {
+BVHNode() : m_parentNodeIndex(AABB_NULL_NODE), m_leftNodeIndex(AABB_NULL_NODE), m_rightNodeIndex(AABB_NULL_NODE), m_nextNodeIndex(AABB_NULL_NODE) {
 
 }
   void BindEntity(const Entity e) {

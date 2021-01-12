@@ -73,19 +73,17 @@ RunState::RunState() {
 
   srand(time(0));
   
-  for(int i = 0; i < 3; i++) {
+  for(int i = 0; i < 500; i++) {
     Entity e = coordinator->CreateEntity();
     coordinator->AddComponent(e, Renderable{"box"});
     coordinator->AddComponent(e, Texture {"box", 20.0f});
-
-    coordinator->AddComponent(e, Transform{glm::vec3(rand() % 100, rand() % 100, rand() % 100),
+    coordinator->AddComponent(e, Transform{glm::vec3(rand() % 1000, rand() % 1000, rand() % 1000),
 					   glm::vec3(0.0f, 0.0f, 0.0f),
                                          glm::vec3(2.0f, 2.0f, 2.0f)
                                          });
-    coordinator->AddComponent(e, Collidable {"box", true});
-    //    coordinator->AddComponent(e, Physics { glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), 1.0f});
-    m_Entities.push_back(e);
-   }
+    coordinator->AddComponent(e, Collidable {"box"});
+    coordinator->AddComponent(e, Physics { glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), 5.0f});
+  }
 }
 
 void RunState::Init() {  
@@ -122,9 +120,9 @@ void RunState::Update(GameManager *pManager) {
   auto chunkSystem = coordinator->GetSystem<ChunkSystem>();
   auto collisionSystem = coordinator->GetSystem<CollisionSystem>();
   auto physicsSystem = coordinator->GetSystem<PhysicsSystem>();
-  chunkSystem->Update();
+  chunkSystem->Update();  
   collisionSystem->Update();
-  //  physicsSystem->Update(t, dt);
+  physicsSystem->Update(t, dt);
 }  
   
 

@@ -1,6 +1,7 @@
 #include "ControlSystem.h"
 #include "../Components/Camera.h"
 #include "../Components/Transform.h"
+#include "../Components/Physics.h"
 #include "../Toolbox/Coordinator.h"
 
 #include <glm/gtx/transform.hpp>
@@ -12,8 +13,9 @@ void ControlSystem::Update(const bool* keys, const glm::vec2 mousePos) {
   for(auto const& e : m_Entities) {
     auto& camera = coordinator->GetComponent<Camera>(e);
     auto& transform = coordinator->GetComponent<Transform>(e);
+    auto& phy = coordinator->GetComponent<Physics>(e);
     
-    const float cameraSpeed = 1.5f;
+    const float cameraSpeed = 100.0f;
     glm::vec2 mouseDel = mousePos - camera.mousePosition;
 
     if(glm::length(mouseDel) > 100) {
@@ -32,21 +34,49 @@ void ControlSystem::Update(const bool* keys, const glm::vec2 mousePos) {
     camera.mousePosition = mousePos;
     float multiplier = 1.0f;
 
-    if(keys[GLFW_KEY_LEFT_SHIFT]) {
-      multiplier = 5.0f;
-    }
+    if(camera.fly) {
     
-    if(keys[GLFW_KEY_W]) {
-      transform.position += multiplier * cameraSpeed * camera.front;
-    }
-    if(keys[GLFW_KEY_S]) {
-      transform.position -= cameraSpeed * camera.front;
-    }
-    if(keys[GLFW_KEY_A]) {
-      transform.position -= glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
-    }
-    if(keys[GLFW_KEY_D]) {
-      transform.position += glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+      if(keys[GLFW_KEY_LEFT_SHIFT]) {
+	multiplier = 5.0f;
+      }
+    
+      if(keys[GLFW_KEY_W]) {
+	transform.position += multiplier * cameraSpeed * camera.front;
+      }
+      if(keys[GLFW_KEY_S]) {
+	transform.position -= cameraSpeed * camera.front;
+      }
+      if(keys[GLFW_KEY_A]) {
+	transform.position -= glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+      }
+      if(keys[GLFW_KEY_D]) {
+	transform.position += glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+      }
+    } else {
+      if(keys[GLFW_KEY_LEFT_SHIFT]) {
+	multiplier = 5.0f;
+      }
+
+      phy.force = glm::vec3(0.0f,0.0f,0.0f);
+      
+      if(keys[GLFW_KEY_W]) {
+	phy.velocity = multiplier * cameraSpeed * glm::vec3(camera.front[0], 0.0f, camera.front[2]);
+      }
+      if(keys[GLFW_KEY_S]) {
+	phy.velocity = cameraSpeed * -glm::vec3(camera.front[0], 0.0f, camera.front[2]);
+      }
+      if(keys[GLFW_KEY_A]) {
+	phy.velocity = -glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+      }
+      if(keys[GLFW_KEY_D]) {
+	phy.velocity = glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+      }
+
+      if(keys[GLFW_KEY_SPACE] && phy.velocity[1] == 0.0f) {
+	phy.velocity += glm::vec3(0.0f,10.0f,0.0f);
+      }
+
+      
     }
     
   }
