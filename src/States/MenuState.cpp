@@ -4,15 +4,6 @@
 #include "../RenderEngine/DisplayManager.h"
 #include "../System/UICollisionSystem.h"
 #include "../System/UIRenderSystem.h"
-/* TODO:
- * figure out how to get the current height / width of the window and position
- * stuff relatively to the screen have this passed to the menuItems to
- * facilitate collision detection have a piece of the runstate saved as a
- * runbuffer and blurred to make it look pretty that would be cool figure out if
- * submenus should be another state or maybe even make a menuManager class
- * figure out how to exit gracefully
- */
-
 MenuState::MenuState() {
   
   Coordinator *coordinator = &Coordinator::GetInstance();

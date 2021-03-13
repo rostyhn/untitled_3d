@@ -72,17 +72,20 @@ RunState::RunState() {
   chunkSystem->Init();
 
   srand(time(0));
+
+
   
-  for(int i = 0; i < 500; i++) {
+    for(int i = 0; i < 25; i++) {
     Entity e = coordinator->CreateEntity();
     coordinator->AddComponent(e, Renderable{"box"});
     coordinator->AddComponent(e, Texture {"box", 20.0f});
     coordinator->AddComponent(e, Transform{glm::vec3(rand() % 1000, rand() % 1000, rand() % 1000),
-					   glm::vec3(0.0f, 0.0f, 0.0f),
-                                         glm::vec3(2.0f, 2.0f, 2.0f)
+					 glm::vec3(0.0f, 0.0f, 0.0f),
+                                         glm::vec3(5.0f, 5.0f, 5.0f)
                                          });
-    coordinator->AddComponent(e, Collidable {"box"});
-    coordinator->AddComponent(e, Physics { glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(0.0f,0.0f,0.0f), 5.0f});
+  
+    coordinator->AddComponent(e, Collidable {"box", true});
+    //coordinator->AddComponent(e, Physics { 0.1f,1.0f});
   }
 }
 
@@ -91,7 +94,7 @@ void RunState::Init() {
 }
 
 void RunState::Cleanup() {
-  // could DRY this
+
   Coordinator *coordinator = &Coordinator::GetInstance();
   for (auto e : m_Entities) {
     coordinator->DestroyEntity(e);
@@ -112,7 +115,7 @@ void RunState::HandleEvents(GameManager *pManager) {
 
   auto controller = coordinator->GetSystem<ControlSystem>();
   controller->Update(pManager->m_keys,
-                     glm::vec2(pManager->m_mouseX, pManager->m_mouseY));
+                     glm::vec2(pManager->m_mouseX, pManager->m_mouseY), dt);
 }
 
 void RunState::Update(GameManager *pManager) {  

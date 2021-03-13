@@ -7,5 +7,7 @@
 class System {
  public:
   std::set<Entity> m_Entities;
+  virtual void NotifyAdded(const Entity e) {}
+  virtual void NotifyErased(const Entity e) {}
 };
 #endif

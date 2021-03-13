@@ -32,11 +32,12 @@ public:
       auto const &type = pair.first;
       auto const &sys = pair.second;
       auto const &sysSig = m_Signatures[type];
-
       if ((eSig & sysSig) == sysSig) {
         sys->m_Entities.insert(e);
+	sys->NotifyAdded(e);
       } else {
         sys->m_Entities.erase(e);
+	//sys->NotifyErased(e);
       }
     }
   }

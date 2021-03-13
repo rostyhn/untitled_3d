@@ -13,8 +13,10 @@ class CollisionSystem : public System {
 public:
   CollisionSystem();
   void Update();
+  virtual void NotifyAdded(Entity e);
+  virtual void NotifyErased(Entity e);
 private:
-  std::vector<float> ReturnExtents(Entity e, Transform transform);
+  const float epsilon = 0.1;
   BVH m_bvh;
 };
 #endif

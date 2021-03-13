@@ -17,7 +17,7 @@ UIRenderSystem::UIRenderSystem()
 
 void UIRenderSystem::Init() {
 
-  // switch to atlas
+  // TODO: switch to atlas
   FT_Library ft;
   if (FT_Init_FreeType(&ft)) {
     std::cout << "ERROR::FREETYPE: Could not init FreeType Library"

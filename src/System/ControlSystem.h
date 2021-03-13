@@ -6,6 +6,6 @@
 class ControlSystem : public System {
 public:
   ControlSystem() {}
-  void Update(const bool* keys, const glm::vec2 mousePos);
+  void Update(const bool* keys, const glm::vec2 mousePos, const float dt);
 };
 #endif

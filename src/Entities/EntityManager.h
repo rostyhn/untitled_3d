@@ -4,9 +4,6 @@
 #include <queue>
 #include <array>
 
-
-//go back and possibly make this into a singleton
-
 class EntityManager {
  public:
   EntityManager() {

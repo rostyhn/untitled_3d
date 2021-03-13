@@ -12,12 +12,13 @@
 
 class BVH {
 public:
-  BVH(unsigned initalSize);
+  BVH(unsigned initalSize, float margin);
   ~BVH();
   void Add(const Entity e);
   void Remove(const Entity e);
   void Update(const Entity e);
   std::forward_list<Entity> QueryOverlaps(const Entity e);
+
   std::set<Entity> m_Entities;
   
 private:
@@ -38,6 +39,6 @@ private:
   std::vector<BVHNode> m_nodes;
   std::map<Entity, unsigned> m_entityNodeMap;
 
-  const float m_margin = 1.0f;
+  const float m_margin;
 };
 #endif

@@ -6,9 +6,9 @@
 class PhysicsSystem : public System {
 public:
  PhysicsSystem() {}
- void Update(const double t, const double dt);
+ void Update(const float t, const float dt);
 private:
+  //allegedly -9.8 is too low for games
  const float gravity = -9.8f;
-  const float friction = 0.4;
 };
 #endif

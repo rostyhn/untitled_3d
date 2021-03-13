@@ -100,11 +100,10 @@ _NCrunch_*
 *.mm.*
 AutoTest.Net/
 
-#linux shit
+#linux stuff
 .ccls-cache/
 \#*#
 *~
-
 
 # Web workbench (sass)
 .sass-cache/

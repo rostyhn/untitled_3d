@@ -33,6 +33,6 @@ private:
   
   //eventually, https://gafferongames.com/post/fix_your_timestep/
   double t = 0.0;
-  const double dt = 0.01;
+  const double dt = 1.0 / 60.0;
 };
 #endif // !RUNSTATE_H

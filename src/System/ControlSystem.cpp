@@ -7,7 +7,7 @@
 #include <glm/gtx/transform.hpp>
 #include <GLFW/glfw3.h>
 
-void ControlSystem::Update(const bool* keys, const glm::vec2 mousePos) {
+void ControlSystem::Update(const bool* keys, const glm::vec2 mousePos, const float dt) {
   Coordinator* coordinator = &Coordinator::GetInstance();
   
   for(auto const& e : m_Entities) {
@@ -15,7 +15,7 @@ void ControlSystem::Update(const bool* keys, const glm::vec2 mousePos) {
     auto& transform = coordinator->GetComponent<Transform>(e);
     auto& phy = coordinator->GetComponent<Physics>(e);
     
-    const float cameraSpeed = 100.0f;
+    const float cameraSpeed = 1.0f;
     glm::vec2 mouseDel = mousePos - camera.mousePosition;
 
     if(glm::length(mouseDel) > 100) {
@@ -54,30 +54,34 @@ void ControlSystem::Update(const bool* keys, const glm::vec2 mousePos) {
       }
     } else {
       if(keys[GLFW_KEY_LEFT_SHIFT]) {
-	multiplier = 5.0f;
+	multiplier = 2.5f;
       }
-
-      phy.force = glm::vec3(0.0f,0.0f,0.0f);
       
       if(keys[GLFW_KEY_W]) {
-	phy.velocity = multiplier * cameraSpeed * glm::vec3(camera.front[0], 0.0f, camera.front[2]);
+	transform.position += multiplier * cameraSpeed * glm::vec3(camera.front[0], 0.0f, camera.front[2]);
       }
       if(keys[GLFW_KEY_S]) {
-	phy.velocity = cameraSpeed * -glm::vec3(camera.front[0], 0.0f, camera.front[2]);
+	transform.position += (cameraSpeed * -glm::vec3(camera.front[0], 0.0f, camera.front[2]));
       }
       if(keys[GLFW_KEY_A]) {
-	phy.velocity = -glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+	transform.position += (-glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed);
       }
       if(keys[GLFW_KEY_D]) {
-	phy.velocity = glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed;
+	transform.position += (glm::normalize(glm::cross(camera.front, camera.up)) * cameraSpeed);
       }
-
-      if(keys[GLFW_KEY_SPACE] && phy.velocity[1] == 0.0f) {
-	phy.velocity += glm::vec3(0.0f,10.0f,0.0f);
-      }
-
       
+      if(keys[GLFW_KEY_SPACE]) {
+	phy.AddForce(glm::vec3(0.0f,25.0f,0.0f));
+      }
     }
+    //later, gonna add console commands, that would be really cool
+      if(keys[GLFW_KEY_V]) {
+	std::cout << "You are at" << std::endl;
+	std::cout << "X: " << transform.position[0] << std::endl;
+	std::cout << "Y: " << transform.position[1] << std::endl;
+	std::cout << "Z: " << transform.position[2] << std::endl;
+      }
+
     
   }
 }

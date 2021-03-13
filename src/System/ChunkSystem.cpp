@@ -5,6 +5,8 @@
 #include "../Components/Transform.h"
 #include "../Components/Texture.h"
 #include "../Components/Collidable.h"
+#include "../Components/AABB.h"
+#include "../Components/Physics.h"
 #include "../Toolbox/Coordinator.h"
 #include <vector>
 
@@ -102,7 +104,8 @@ Entity ChunkSystem::LoadTerrain(const char* modelName, const char* textureName, 
   coordinator->AddComponent(e, Transform { glm::vec3(position[0],0.0f,position[1]), glm::vec3(0.0f,0.0f,0.0f), glm::vec3(1.0f,1.0f,1.0f)});
   coordinator->AddComponent(e, Renderable { modelName });
   coordinator->AddComponent(e, Texture { textureName, 20.0f });
-  //coordinator->AddComponent(e, Collidable { 0.0f, -1.0f, 0.0f, 800.0f, 0.25, 800.0f });
+  //coordinator->AddComponent(e, Collidable { modelName });
+  //coordinator->AddComponent(e, Physics { 0.01f, 0.0f });
   return e;
 }
 
@@ -146,7 +149,7 @@ void ChunkSystem::GenerateTerrain() {
   }
 
   Loader* loader = &Loader::getInstance();
-  std::vector<float> bBox = { 0.0f, -1.0f, 0.0f, float(count), 1.0f, float(count)  };
+  AABB bBox = { -400.0f, -1.0f, -400.0f, 400.0f, 0.0f, 400.0f};
   return loader->LoadToVAO(vertices, textureCoords, normals, indices,
                            "terrain1", bBox);
 }

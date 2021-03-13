@@ -1,6 +1,7 @@
 #include "Loader.h"
 #include <iostream>
 #include <cassert>
+#include "../Components/AABB.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -18,33 +19,40 @@ Loader::~Loader()
 {
   // Loop through all the storage arrays and delete OpenGL variables
 
-  while (m_vbos.size() > 0)
-    {
+  while (m_vbos.size() > 0) {
       glDeleteBuffers(1, &m_vbos.back());
       m_vbos.pop_back();
-    }
-  /*
-  while (m_vaos.size() > 0)
-    {
-      glDeleteVertexArrays(1, &m_vaos.back());
-      m_vaos.pop_back();
-    }
-  */
-  /*  while (m_textures.size() > 0)
-    {
-      glDeleteTextures(1, &m_textures.back());
-      m_textures.pop_back();
-      }*/
+  }
+  
+  for (auto it = m_vaos.cbegin(); it != m_vaos.cend();) {
+    glDeleteVertexArrays(1, &it->second);
+    m_vaos.erase(it++);
+  }
+  
+  for (auto it = m_textures.cbegin(); it != m_textures.cend();) {
+    glDeleteTextures(1, &it->second);
+    m_textures.erase(it++);
+  }
+  
 }
 
 
-void Loader::LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> textures, std::vector<glm::vec3> normals, std::vector<int> indices, const std::string& name, std::vector<float> bBox)
+void Loader::LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> textures, std::vector<glm::vec3> normals, std::vector<int> indices, const std::string& name, AABB& bBox)
 {
   // create a new VAO
   GLuint vaoID = CreateVAO(name);
   int indicesSize = indices.size();
   m_vertSize.insert(std::pair<const std::string, int>(name, indicesSize));
   BindIndicesBuffer(indices.data(), indicesSize);
+
+  //START HERE
+  //here we need to build a neighbor list (temporary - this will build the DKH)
+  //basically you read an index, put it into a map 
+  //everytime you see this index appear, put the next other 2 in the set
+  //continue till you reach the end of the indices
+  //then build the DKH, get rid of this set cause you don't need it
+  //when marking, set up another temporary set on the stack to consider them marked
+  
   // Store the data in attribute lists
   StoreBoundingBox(name, bBox);
   StoreDataInAttributeList(0, 3, &vertices[0], vertices.size() * sizeof(glm::vec3));
@@ -54,7 +62,7 @@ void Loader::LoadToVAO(std::vector<glm::vec3> vertices, std::vector<glm::vec2> t
   
 }
 
-std::vector<float> Loader::GetBoundingBox(const std::string& modelName) {
+AABB& Loader::GetBoundingBox(const std::string& modelName) {
   return m_boundingBoxes[modelName];
 }
 
@@ -90,8 +98,8 @@ void Loader::LoadTexture(const std::string& fileName, bool repeat)
 
 
   // How OpenGL will fill an area that's to big or to small
-  //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   // Allow repeating textures for terrain
@@ -126,8 +134,8 @@ GLuint Loader::CreateVAO(const std::string& name)
   return vaoID;
 }
 
-void Loader::StoreBoundingBox(const std::string& name, std::vector<float> bBox) {
-  m_boundingBoxes.insert(std::pair<const std::string, std::vector<float>>(name, bBox));
+void Loader::StoreBoundingBox(const std::string& name, AABB& bBox) {
+  m_boundingBoxes.insert(std::pair<const std::string, AABB>(name, bBox));
 }
 
 

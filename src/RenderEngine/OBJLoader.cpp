@@ -3,6 +3,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "../Components/AABB.h"
+
 #ifdef unix
 #define fopen_s(pFile,filename,mode) ((*(pFile))=fopen((filename),(mode)))==NULL
 #endif
@@ -101,8 +103,13 @@ void OBJLoader::LoadObjModel(const std::string& fileName, Loader* loader)
     }
   fclose(file);
 
-  std::vector<float> bBox = { (float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ };
+  //needed for broadphase
+  AABB bBox = { (float) minX, (float) minY, (float) minZ, (float) maxX, (float) maxY, (float) maxZ };
 
+  //generate the adjacency matrix for the model
+
+  
+  
   //printf("Load time: %dms\n", clock() - startTime);
   loader->LoadToVAO(vertices, textures, normals, indices, fileName, bBox);
 }

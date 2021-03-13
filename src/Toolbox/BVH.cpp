@@ -4,9 +4,8 @@
 
 #define AABB_NULL_NODE 0xffffffff
 
-BVH::BVH(unsigned initalSize) : m_rootNodeIndex(AABB_NULL_NODE), m_allocatedNodeCount(0), m_nextFreeNodeIndex(0), m_nodeCapacity(initalSize), m_growthSize(initalSize) {
+BVH::BVH(unsigned initalSize, float margin) : m_rootNodeIndex(AABB_NULL_NODE), m_allocatedNodeCount(0), m_nextFreeNodeIndex(0), m_nodeCapacity(initalSize), m_growthSize(initalSize), m_margin(margin) {
   m_nodes.resize(initalSize);
-  
   for(unsigned ni = 0; ni < initalSize; ni++) {
     BVHNode& node = m_nodes[ni];
     node.m_nextNodeIndex = ni+1;
@@ -16,6 +15,9 @@ BVH::BVH(unsigned initalSize) : m_rootNodeIndex(AABB_NULL_NODE), m_allocatedNode
 
 
 BVH::~BVH() {
+  m_nodes.clear();
+  m_entityNodeMap.clear();
+  m_Entities.clear();
 }
 
 unsigned BVH::AllocateNode() {
@@ -61,8 +63,7 @@ void BVH::Add(const Entity e) {
 
   node.BindEntity(e);
   //make sure to have the bBox calculated in world coords
-  node.CalculateBoundingBox(m_margin);
-
+  node.CalculateBoundingBox(m_margin, e);
   
   InsertLeaf(nodeIndex);
   m_entityNodeMap[e] = nodeIndex;
@@ -186,7 +187,6 @@ void BVH::RemoveLeaf(unsigned leafNodeIndex) {
   if(grandParentNodeIndex != AABB_NULL_NODE) {
 
     BVHNode& grandParentNode = m_nodes[grandParentNodeIndex];
-
     if(grandParentNode.m_leftNodeIndex == parentNodeIndex) {
       grandParentNode.m_leftNodeIndex = siblingNodeIndex;
     } else {
@@ -206,24 +206,25 @@ void BVH::RemoveLeaf(unsigned leafNodeIndex) {
 void BVH::UpdateLeaf(unsigned leafNodeIndex) {
   BVHNode& fattened = m_nodes[leafNodeIndex];
   BVHNode moved = BVHNode { };
-  moved.BindEntity(fattened.m_entity);
-  moved.CalculateBoundingBox(0.0f);
+  //possibly a bottleneck
 
+  //think of making this better
+  moved.BindEntity(fattened.m_entity);
+  moved.CalculateBoundingBox(0.0f, fattened.m_entity);
+  
   //check if fattened aabb contains moved
-  if (fattened.aabb.Contains(moved.aabb)) {
-    return;
-  }
+  if (fattened.aabb.Contains(moved.aabb)) return;
+
   
   RemoveLeaf(leafNodeIndex);
   
-  fattened.aabb.m_minX = moved.aabb.m_minX - m_margin;
-  fattened.aabb.m_minY = moved.aabb.m_minY - m_margin;
-  fattened.aabb.m_minZ = moved.aabb.m_minZ - m_margin;
-  fattened.aabb.m_maxX = moved.aabb.m_maxX + m_margin;
-  fattened.aabb.m_maxY = moved.aabb.m_maxY + m_margin;
-  fattened.aabb.m_maxZ = moved.aabb.m_maxZ + m_margin;
+  fattened.aabb.m_min[0] = moved.aabb.m_min[0] - m_margin;
+  fattened.aabb.m_min[1] = moved.aabb.m_min[1] - m_margin;
+  fattened.aabb.m_min[2] = moved.aabb.m_min[2] - m_margin;
+  fattened.aabb.m_max[0] = moved.aabb.m_max[0] + m_margin;
+  fattened.aabb.m_max[1] = moved.aabb.m_max[1] + m_margin;
+  fattened.aabb.m_max[2] = moved.aabb.m_max[2] + m_margin;
   fattened.aabb.m_surfaceArea = fattened.aabb.SurfaceArea();
-  
   
   InsertLeaf(leafNodeIndex);
 }
@@ -250,18 +251,18 @@ std::forward_list<Entity> BVH::QueryOverlaps(const Entity e) {
   std::stack<unsigned> stack;
   BVHNode& startNode = m_nodes[m_entityNodeMap[e]];
   stack.push(m_rootNodeIndex);
-
+  
   while(!stack.empty()) {
     unsigned nodeIndex = stack.top();
+
     stack.pop();
+
     if(nodeIndex == AABB_NULL_NODE) continue;
+
     BVHNode& node = m_nodes[nodeIndex];
     if(node.aabb.Overlaps(startNode.aabb)) {
       if(node.IsLeaf() && node.m_entity != startNode.m_entity) {
-	//	if(node.aabb.Contains(startNode.aabb)) {
-	  
-	    overlaps.push_front(node.m_entity);
-	  //}
+	overlaps.push_front(node.m_entity);
       } else {
 	stack.push(node.m_leftNodeIndex);
 	stack.push(node.m_rightNodeIndex);
@@ -270,3 +271,5 @@ std::forward_list<Entity> BVH::QueryOverlaps(const Entity e) {
   }
   return overlaps;
 }
+
+
